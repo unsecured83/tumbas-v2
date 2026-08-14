@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Admin - TokoKu</title>
+    
+    <!-- Library Eksternal / CDN -->
+    <link rel="stylesheet" href="css/tailwind.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Panggil CSS Global Kita -->
+    <link rel="stylesheet" href="css/global.css">
+    
+    <!-- Sedikit perbaikan UI spesifik halaman login agar background sesuai -->
+    <style> body { background-color: #f3f4f6; } </style>
+</head>
+<body class="flex items-center justify-center h-screen">
+    <div class="bg-white p-8 rounded-xl shadow-md w-96 border border-gray-200">
+        <div class="text-center mb-6">
+            <i id="loginIcon" class="fa-solid fa-store text-4xl text-green-500 mb-2"></i>
+            <img id="loginLogoImg" src="" class="h-16 w-16 mx-auto mb-2 rounded object-cover hidden shadow-sm border border-gray-100">
+            <h1 class="text-2xl font-bold text-gray-800">Login Admin</h1>
+        </div>
+        <form id="loginForm" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Email Admin</label>
+                <input type="email" id="email" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500" required>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                <div class="relative">
+                    <input type="password" id="password" class="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500" required>
+                    <button type="button" id="togglePassword" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-green-600 focus:outline-none transition-colors">
+                        <i class="fa-solid fa-eye" id="eyeIcon"></i>
+                    </button>
+                </div>
+            </div>
+
+            <button type="submit" id="btnLogin" class="w-full bg-green-600 text-white font-medium py-2.5 rounded-lg hover:bg-green-700 transition-colors">Masuk</button>
+        </form>
+        <p id="pesanError" class="text-red-500 text-sm text-center mt-3 hidden"></p>
+    </div>
+
+    <!-- Panggil File JavaScript Modular Kita -->
+    <!-- URUTAN SANGAT PENTING: supabase.js harus dipanggil sebelum auth.js -->
+    <script src="js/supabase.js"></script>
+    <script src="js/auth.js"></script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+/* --- Pengaturan Global --- */
+body { 
+    font-family: 'Inter', sans-serif; 
+    background-color: #f5f5f5; /* Default background untuk katalog */
+}
+
+/* --- Khusus Halaman Katalog --- */
+.product-card { 
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; 
+}
+.product-card:hover { 
+    transform: translateY(-2px); 
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); 
+    border-color: #25D366; 
+}
+.bg-wa { background-color: #25D366; } 
+.hover\:bg-wa-dark:hover { background-color: #128C7E; }
+
+/* Menyembunyikan Scrollbar tapi tetap bisa di-scroll (Katalog) */
+.hide-scrollbar::-webkit-scrollbar { display: none; } 
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* --- Khusus Admin Panel --- */
+/* Custom Scrollbar untuk Tabel Admin */
+.table-container::-webkit-scrollbar { height: 8px; }
+.table-container::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
+
+/* Animasi Transisi Tab Admin */
+.tab-content { display: none; animation: fadeIn 0.3s ease-in-out; }
+.tab-content.active { display: block; }
+@keyframes fadeIn { 
+    from { opacity: 0; transform: translateY(5px); } 
+    to { opacity: 1; transform: translateY(0); } 
+}
+
+/* Animasi Getar untuk Validasi Error */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-5px); }
+    40%, 80% { transform: translateX(5px); }
+}
+.animate-shake {
+    animation: shake 0.4s ease-in-out;
+}

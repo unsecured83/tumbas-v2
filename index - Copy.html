@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="pageTitleDisplay">Katalog Toko</title>
+    
+    <!-- Library Eksternal / CDN -->
+    <link rel="stylesheet" href="css/tailwind.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Panggil CSS Global Kita -->
+    <link rel="stylesheet" href="css/global.css">
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <header class="bg-green-600 shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-2">
+            <div class="flex justify-between items-center h-12">
+                <div class="flex-shrink-0 flex items-center gap-2 text-white">
+                    <i id="headerIcon" class="fa-solid fa-store text-2xl"></i>
+                    <img id="headerLogoImg" src="" class="h-12 w-12 rounded object-cover hidden -mt-1">
+                    
+                    <!-- Wrapper untuk Nama Toko & Official Store -->
+                    <div class="hidden sm:flex flex-col justify-center">
+                        <span id="storeNameDisplay" class="font-bold text-3xl tracking-tight leading-none">TokoKu</span>
+                        <span class="text-[11px] font-semibold text-green-200 tracking-wider uppercase mt-0.5">
+                            <i class="fa-solid fa-circle-check mr-1"></i>Official Store
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="flex-1 max-w-3xl mx-4 sm:mx-8 relative flex flex-col justify-center">
+                    <div class="flex w-full">
+                        <input type="text" id="searchInput" class="block w-full pl-4 pr-12 py-2.5 border-none rounded-sm bg-white focus:ring-2 focus:ring-green-300 text-sm text-gray-900" placeholder="Cari barang...">
+                        <button class="bg-gray-100 hover:bg-gray-200 px-5 rounded-r-sm absolute right-0 top-0 bottom-0 border-l border-gray-300">
+                            <i class="fa-solid fa-magnifying-glass text-gray-600"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-4 text-white relative">
+                    <!-- Tombol Lacak Pesanan -->
+                    <button onclick="openTrackModal()" class="relative p-2 hover:bg-green-700 rounded-full transition-colors" title="Lacak Pesanan">
+                        <i class="fa-solid fa-file-invoice text-xl"></i>
+                    </button>
+                    
+                    <!-- Tombol Keranjang -->
+                    <button onclick="toggleCart()" class="relative p-2 hover:bg-green-700 rounded-full transition-colors">
+                        <i class="fa-solid fa-cart-shopping text-xl"></i>
+                        <span id="cartBadge" class="absolute top-0 right-0 -mt-1 -mr-1 bg-red-500 text-white text-[10px] font-bold h-5 w-5 rounded-full flex items-center justify-center hidden">0</span>
+                    </button>
+                    <!-- Tautan Hubungi Admin -->
+                    <a id="headerWaLink" href="#" target="_blank" class="text-sm font-medium hover:text-gray-200 flex items-center gap-1 hidden sm:flex">
+                        <i class="fa-brands fa-whatsapp text-2xl"></i> <span>Admin</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Modal Pilih Varian -->
+    <div id="variantModal" class="fixed inset-0 z-[60] hidden flex items-center justify-center">
+        <div class="absolute inset-0 bg-black bg-opacity-50" onclick="closeVariantModal()"></div>
+        <div class="bg-white p-6 rounded-xl shadow-xl z-10 w-full max-w-sm mx-4 transform transition-all scale-95 opacity-0" id="variantPanel">
+            <div class="flex justify-between items-center mb-4 border-b pb-2">
+                <h3 id="modalVariantTitle" class="text-lg font-bold text-gray-800">Pilih Varian</h3>
+                <button onclick="closeVariantModal()" class="text-gray-500 hover:text-red-500"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div class="flex items-center gap-3 mb-4">
+                <img id="varModalImg" src="" class="w-12 h-12 rounded object-cover border">
+                <div>
+                    <h4 id="varModalName" class="text-sm font-semibold text-gray-800 line-clamp-1"></h4>
+                    <p id="varModalPrice" class="text-sm text-green-600 font-bold"></p>
+                </div>
+            </div>
+            <p id="modalVariantSubtitle" class="text-sm text-gray-600 mb-2 font-medium">Varian Tersedia:</p>
+            <div id="variantButtonsContainer" class="flex flex-wrap gap-2 mb-6">
+                <!-- Tombol varian akan di-generate oleh JS di sini -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Keranjang Belanja -->
+    <div id="cartModal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black bg-opacity-50" onclick="toggleCart()"></div>
+        <div class="absolute inset-y-0 right-0 max-w-md w-full bg-white shadow-xl flex flex-col transform transition-transform duration-300 translate-x-full" id="cartPanel">
+            <div class="p-4 border-b flex justify-between items-center bg-green-50">
+                <h2 class="text-lg font-bold text-gray-800"><i class="fa-solid fa-cart-shopping mr-2 text-green-600"></i>Keranjang Anda</h2>
+                <button onclick="toggleCart()" class="text-gray-500 hover:text-red-500 text-xl"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <!-- Daftar Barang di Keranjang -->
+            <div id="cartItemsContainer" class="flex-1 overflow-y-auto p-4 space-y-4">
+                <div class="text-center text-gray-500 py-10">Keranjang masih kosong.</div>
+            </div>
+
+            <!-- Total & Checkout -->
+            <div class="p-4 border-t bg-gray-50">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-gray-600 font-medium">Total Pembayaran:</span>
+                    <span id="cartTotalDisplay" class="text-xl font-bold text-green-600">Rp 0</span>
+                </div>
+                <button onclick="openCheckoutForm()" id="btnCheckout" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg flex justify-center items-center gap-2 shadow-md" disabled>
+                    <i class="fa-solid fa-arrow-right text-xl"></i> Isi Data Pengiriman
+                </button>
+            </div>
+        </div> 
+    </div> 
+
+    <!-- Modal Formulir Pengiriman (SUDAH DI LUAR KERANJANG) -->
+    <div id="checkoutFormModal" class="fixed inset-0 z-[60] hidden flex items-center justify-center">
+        <!-- Background Gelap -->
+        <div class="absolute inset-0 bg-black bg-opacity-60" onclick="closeCheckoutForm()"></div>
+        
+        <!-- Kotak Formulir -->
+        <div class="bg-white p-6 rounded-xl shadow-2xl z-10 w-full max-w-md mx-4 transform transition-all scale-95 opacity-0 flex flex-col max-h-[90vh]" id="checkoutFormPanel">
+            
+            <div class="flex justify-between items-center mb-5 border-b pb-3">
+                <h3 class="text-lg font-bold text-gray-800"><i class="fa-solid fa-truck-fast text-green-600 mr-2"></i>Detail Pengiriman</h3>
+                <button onclick="closeCheckoutForm()" class="text-gray-400 hover:text-red-500 transition-colors"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            
+            <!-- Area Form (Bisa di-scroll jika layar HP sangat kecil) -->
+            <div class="overflow-y-auto space-y-4 flex-1 pr-1">
+                <div class="bg-blue-50 text-blue-700 text-xs p-3 rounded-lg border border-blue-100 mb-2">
+                    <i class="fa-solid fa-circle-info mr-1"></i> Silakan lengkapi data berikut agar pesanan dapat segera diproses.
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">Nama Lengkap <span class="text-red-500">*</span></label>
+                    <input type="text" id="custName" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm" placeholder="Cth: Budi Santoso" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">No. WhatsApp Aktif <span class="text-red-500">*</span></label>
+                    <input type="number" id="custPhone" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm" placeholder="Cth: 08123456789" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">Alamat Lengkap <span class="text-red-500">*</span></label>
+                    <textarea id="custAddress" rows="3" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm" placeholder="Jalan, RT/RW, Desa, Kecamatan, Kab/Kota" required></textarea>
+                </div>
+            </div>
+
+            <!-- Tombol Final -->
+            <div class="mt-6 pt-4 border-t border-gray-100">
+                <button onclick="prosesCheckoutOtomatis()" id="btnFinalCheckout" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-4 rounded-lg flex justify-center items-center gap-2 shadow-md transition-all transform hover:scale-[1.02]">
+                    <i class="fa-solid fa-credit-card text-xl"></i> Bayar Sekarang
+                </button>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- Modal Lacak Pesanan -->
+    <div id="trackOrderModal" class="fixed inset-0 z-[60] hidden flex items-center justify-center">
+        <!-- Background Gelap -->
+        <div class="absolute inset-0 bg-black bg-opacity-60" onclick="closeTrackModal()"></div>
+        
+        <!-- Kotak Pencarian -->
+        <div class="bg-white p-6 rounded-xl shadow-2xl z-10 w-full max-w-sm mx-4 transform transition-all scale-95 opacity-0 flex flex-col" id="trackOrderPanel">
+            <div class="flex justify-between items-center mb-5 border-b pb-3">
+                <h3 class="text-lg font-bold text-gray-800"><i class="fa-solid fa-magnifying-glass text-green-600 mr-2"></i>Lacak Pesanan</h3>
+                <button onclick="closeTrackModal()" class="text-gray-400 hover:text-red-500 transition-colors"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            
+            <div class="mb-5">
+                <p class="text-xs text-gray-500 mb-3">Masukkan Nomor Invoice (Contoh: INV-17866...) untuk melihat status pengiriman atau melanjutkan pembayaran.</p>
+                <input type="text" id="inputTrackOrderId" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all font-mono text-sm" placeholder="INV-..." onkeypress="if(event.key === 'Enter') { cariPesanan(); }">
+            </div>
+
+            <button onclick="cariPesanan()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg flex justify-center items-center gap-2 shadow-md transition-all transform hover:scale-[1.02]">
+                <i class="fa-solid fa-search"></i> Cek Status
+            </button>
+        </div>
+    </div>
+
+    <!-- Banner Promosi -->
+    <div id="bannerSection" class="bg-green-600 text-white border-t border-green-500 hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10 flex flex-col md:flex-row items-center justify-between">
+            <div class="mb-6 md:mb-0 text-center md:text-left">
+                <h1 id="bannerTitleDisplay" class="text-3xl md:text-4xl font-extrabold tracking-tight mb-2">Koleksi Terbaru!</h1>
+                <p id="bannerSubtitleDisplay" class="text-green-100 text-lg">Pesan mudah via WhatsApp.</p>
+            </div>
+            <i class="fa-solid fa-shopping-bag text-6xl text-green-400 opacity-50 hidden md:block"></i>
+        </div>
+    </div>
+
+    <!-- Navigasi Kategori -->
+    <div class="bg-white shadow-sm border-b border-gray-200 sticky z-40" style="top: 72px;">
+        <!-- HAPUS px-4 sm:px-6 lg:px-8 dari baris ini -->
+        <div class="max-w-7xl mx-auto py-2 md:py-3">
+            <!-- PINDAHKAN px-4 sm:px-6 lg:px-8 ke baris ini (ke dalam div categoryContainer) -->
+            <div class="flex gap-2 overflow-x-auto hide-scrollbar px-4 sm:px-6 lg:px-8" id="categoryContainer">
+                <!-- Tombol-tombol akan di-generate otomatis oleh Javascript di sini -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Peringatan Toko Tutup -->
+    <div id="tokoTutupWarning" class="bg-red-500 text-white text-center py-2 text-sm font-bold hidden">
+        <i class="fa-solid fa-circle-exclamation mr-1"></i> Mohon maaf, toko saat ini sedang tutup dan tidak menerima pesanan.
+    </div>
+
+    <main class="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full">
+        <div id="searchIndicatorContainer" class="hidden flex items-center gap-2 mb-4 text-gray-700 bg-white p-3 rounded-md shadow-sm border">
+            <i class="fa-regular fa-lightbulb text-gray-500 text-lg"></i>
+            <span class="text-base">Hasil pencarian untuk '<span id="searchKeywordText" class="font-medium text-green-600"></span>'</span>
+        </div>
+        
+        <div class="flex justify-between items-end mb-4 px-1">
+            <span class="text-sm text-gray-500 font-medium" id="productCount">Memuat data...</span>
+        </div>
+
+        <div id="productGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4"></div>
+
+        <!-- Container Tombol Load More -->
+        <div id="loadMoreContainer" class="hidden flex justify-center mt-8 mb-4">
+            <button id="btnLoadMore" class="bg-white border-2 border-green-500 text-green-600 px-8 py-2.5 rounded-full font-semibold hover:bg-green-50 hover:shadow-sm transition-all focus:ring-4 focus:ring-green-100">
+                Tampilkan Lebih Banyak
+            </button>
+        </div>
+
+        <div id="emptyState" class="hidden py-20 bg-white border border-gray-100 rounded-sm text-center flex flex-col items-center justify-center mt-4">
+            <i class="fa-solid fa-magnifying-glass text-5xl text-gray-300 mb-4"></i>
+            <h3 class="text-lg font-medium text-gray-900 mb-1">Barang tidak ditemukan</h3>
+        </div>
+    </main>
+
+    <footer class="bg-white border-t border-gray-200 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col md:flex-row items-center justify-between">
+            <p class="text-gray-500 text-sm text-center md:text-left">&copy; 2026 <span id="footerStoreName">TokoKu</span>. All rights reserved.</p>
+            <div class="flex space-x-4 mt-4 md:mt-0 text-gray-400">
+                <a id="footerIgLink" href="#" target="_blank" class="hover:text-green-600 transition-colors hidden"><i class="fa-brands fa-instagram text-xl"></i></a>
+                <a id="footerFbLink" href="#" target="_blank" class="hover:text-green-600 transition-colors hidden"><i class="fa-brands fa-facebook text-xl"></i></a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Toast Notifikasi Keranjang ala Shopee -->
+    <!-- Wrapper Full Screen (Kunci posisi selalu di tengah menggunakan Flexbox) -->
+    <div class="fixed inset-0 z-[9999] flex items-center justify-center pointer-events-none">
+        
+        <!-- Kotak Toast -->
+        <div id="shopeeToast" class="flex flex-col items-center justify-center opacity-0 transition-all duration-300 scale-90 shadow-2xl px-8 py-6" style="background-color: rgba(70, 70, 70, 0.95); border-radius: 12px; min-width: 200px;">
+            
+            <div class="mb-3 text-white">
+                <!-- Ikon checkmark diubah menjadi putih polos agar mirip Shopee -->
+                <i class="fa-solid fa-circle-check text-5xl"></i>
+            </div>
+            
+            <p class="text-white text-sm font-medium tracking-wide whitespace-nowrap">Dimasukkan ke Keranjang</p>
+            
+        </div>
+        
+    </div>
+
+    <!-- Panggil File JavaScript Modular Kita -->
+    <!-- URUTAN SANGAT PENTING: supabase.js harus dipanggil sebelum katalog.js -->
+    <script src="js/supabase.js"></script>
+    <script src="js/katalog.js"></script>
+    <!-- Script Midtrans Snap Sandbox -->
+    <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="Mid-client-g6ZluZzq7PjQl86L"></script>
+
+    <!-- Panggil File JavaScript Modular Kita -->
+    <script src="js/supabase.js"></script>
+    <script src="js/katalog.js"></script>
+</body>
+</html>
