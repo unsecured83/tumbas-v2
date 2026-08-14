@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Status Pesanan - TokoKu</title>
+    
+    <!-- Library Eksternal / CDN -->
+    <link rel="stylesheet" href="css/tailwind.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Panggil CSS Global Kita -->
+    <link rel="stylesheet" href="css/global.css">
+
+    <!-- Script Midtrans Snap Sandbox -->
+    <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="Mid-client-g6ZluZzq7PjQl86L"></script>
+</head>
+<body class="bg-gray-50 flex flex-col min-h-screen">
+
+    <header class="bg-green-600 shadow-md">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 py-4 flex justify-between items-center">
+            <a href="index.html" class="text-white flex items-center gap-2 hover:text-green-200 transition-colors">
+                <i class="fa-solid fa-arrow-left text-lg"></i>
+                <span class="font-semibold">Kembali ke Toko</span>
+            </a>
+            <h1 class="text-white font-bold text-lg">Detail Pesanan</h1>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-3xl mx-auto w-full px-4 sm:px-6 py-8">
+        
+        <!-- Indikator Loading -->
+        <div id="loadingIndicator" class="text-center py-20">
+            <i class="fa-solid fa-spinner fa-spin text-4xl text-green-500 mb-4"></i>
+            <p class="text-gray-500 font-medium">Mencari data pesanan...</p>
+        </div>
+
+        <!-- Konten Status (Awalnya Disembunyikan) -->
+        <div id="statusContent" class="hidden space-y-6">
+            
+            <!-- Kartu Status Utama -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 text-center">
+                <div id="statusIcon" class="mb-4 text-5xl"></div>
+                <h2 id="statusTitle" class="text-2xl font-bold text-gray-800 mb-2">Memuat Status...</h2>
+                <p id="orderIdDisplay" class="text-sm font-mono text-gray-500 mb-4"></p>
+                
+                <!-- Tombol Lanjut Bayar (Hanya muncul jika Pending) -->
+                <button id="btnLanjutBayar" onclick="lanjutkanPembayaran()" class="hidden mx-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all transform hover:-translate-y-1">
+                    <i class="fa-solid fa-credit-card mr-2"></i> Lanjutkan Pembayaran
+                </button>
+            </div>
+
+            <!-- Kartu Pengiriman & Resi -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2"><i class="fa-solid fa-truck-fast text-green-600 mr-2"></i>Informasi Pengiriman</h3>
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                        <p class="text-gray-500 mb-1">Status Paket</p>
+                        <p id="shippingStatus" class="font-bold text-gray-800 uppercase tracking-wide">MENUNGGU</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 mb-1">Nomor Resi / Kurir</p>
+                        <p id="shippingResi" class="font-bold text-blue-600 tracking-wider">Belum Ada Resi</p>
+                    </div>
+                    <div class="col-span-2 mt-2">
+                        <p class="text-gray-500 mb-1">Alamat Tujuan</p>
+                        <p id="shippingAddress" class="font-medium text-gray-700 leading-relaxed"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rincian Pesanan -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2"><i class="fa-solid fa-box-open text-green-600 mr-2"></i>Rincian Barang</h3>
+                <div id="orderItemsContainer" class="space-y-4 mb-4">
+                    <!-- Item akan di-generate via JS -->
+                </div>
+                <div class="flex justify-between items-center pt-4 border-t border-gray-100">
+                    <span class="text-gray-600 font-medium">Total Harga</span>
+                    <span id="orderTotal" class="text-xl font-bold text-green-600">Rp 0</span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Pesan Error (Jika Order ID tidak ditemukan) -->
+        <div id="errorState" class="hidden text-center py-20">
+            <i class="fa-solid fa-circle-xmark text-5xl text-red-400 mb-4"></i>
+            <h2 class="text-xl font-bold text-gray-800 mb-2">Pesanan Tidak Ditemukan</h2>
+            <p class="text-gray-500 mb-6">Pastikan link atau Nomor Invoice yang Anda masukkan benar.</p>
+            <a href="index.html" class="bg-green-600 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-green-700">Belanja Kembali</a>
+        </div>
+
+    </main>
+
+    <!-- Panggil File JavaScript Modular Kita -->
+    <script src="js/supabase.js"></script>
+    <script src="js/status.js"></script>
+</body>
+</html>

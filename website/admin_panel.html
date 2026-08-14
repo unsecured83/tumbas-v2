@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Kelola Katalog & Banner</title>
+    
+    <!-- Library Eksternal / CDN -->
+    <link rel="stylesheet" href="css/tailwind.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Panggil CSS Global Kita -->
+    <link rel="stylesheet" href="css/global.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+    <!-- Sidebar Menu -->
+    <aside id="sidebar" class="w-64 bg-gray-900 text-white flex flex-col transition-all duration-300 z-20 shadow-xl overflow-hidden">
+        <div class="p-6 flex items-center justify-center border-b border-gray-800">
+            <!-- UBAH: items-center menjadi items-start di baris ini -->
+            <div class="flex items-start gap-3 text-white w-full px-2">
+                
+                <!-- UBAH: Tambahkan mt-1 pada img agar posisinya turun sedikit sejajar dengan teks -->
+                <img id="sidebarLogo" src="https://ui-avatars.com/api/?name=Toko&background=16a34a&color=fff" class="h-10 w-10 rounded object-cover mt-1">
+                
+                <div class="flex flex-col justify-center flex-1 min-w-0 overflow-hidden py-1">
+                    <!-- 1. Nama Toko (Atas) -->
+                    <span id="adminStoreNameDisplay" class="text-2xl font-bold tracking-tight leading-none mb-1 truncate">TokoKu</span>
+                    
+                    <!-- 2. Label Official Store (Tengah) -->
+                    <span class="text-[10px] font-semibold text-green-400 tracking-wider uppercase mb-0.5 truncate">
+                        <i class="fa-solid fa-circle-check mr-1"></i>Official Store
+                    </span>
+                    
+                    <!-- 3. Role Admin (Bawah) -->
+                    <span id="teksRoleAdmin" class="text-[10px] font-bold text-gray-400 uppercase tracking-wider truncate">Memuat...</span>
+                </div>
+            </div>
+        </div>
+        <nav class="flex-1 px-4 py-6 space-y-2">
+            <a href="#" onclick="switchTab('kelolaBarang')" id="nav-kelolaBarang" class="nav-item flex items-center px-4 py-3 bg-green-600 text-white rounded-lg transition-colors shadow-md">
+                <i class="fa-solid fa-box w-6 text-center mr-3 text-white"></i><span class="font-medium">Kelola Barang</span>
+            </a>
+            <!-- MENU KELOLA PESANAN -->
+            <a href="#" onclick="switchTab('kelolaPesanan')" id="nav-kelolaPesanan" class="nav-item flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg transition-colors">
+                <i class="fa-solid fa-cart-flatbed w-6 text-center mr-3"></i><span class="font-medium">Kelola Pesanan</span>
+            </a>
+            <a href="#" onclick="switchTab('pengaturanBanner')" id="nav-pengaturanBanner" class="nav-item flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg transition-colors">
+                <i class="fa-solid fa-image w-6 text-center mr-3"></i><span class="font-medium">Pengaturan Banner</span>
+            </a>
+            <a href="#" onclick="switchTab('pengaturanToko')" id="nav-pengaturanToko" class="nav-item flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg transition-colors">
+                <i class="fa-solid fa-cog w-6 text-center mr-3"></i><span class="font-medium">Pengaturan Toko</span>
+            </a>
+            <a href="#" onclick="switchTab('logAktivitas')" id="nav-logAktivitas" class="nav-item flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg transition-colors">
+                <i class="fa-solid fa-clipboard-list w-6 text-center mr-3"></i><span class="font-medium">Log Aktivitas</span>
+            </a>
+        </nav>
+        <div class="p-4 border-t border-gray-800">
+            <a href="#" id="btnLogout" class="flex items-center px-4 py-2 text-gray-400 hover:text-red-400 transition-colors">
+                <i class="fa-solid fa-sign-out-alt w-6 text-center mr-3"></i><span>Keluar</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col h-screen overflow-y-auto relative">
+        <header class="bg-white shadow-sm px-8 py-4 flex items-center justify-between sticky top-0 z-10 border-b border-gray-200">
+            <div class="flex items-center gap-4">
+                <button id="btnToggleSidebar" class="text-gray-600 hover:text-green-600 focus:outline-none transition-colors">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+                <h2 id="pageTitle" class="text-xl font-semibold text-gray-800">Manajemen Barang</h2>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-3 cursor-pointer">
+                    <div class="text-sm text-right hidden sm:block">
+                        <p id="profilTokoName" class="font-semibold text-gray-800">TokoKu</p>
+                        <div class="flex items-center justify-end gap-1.5 mt-0.5">
+                            <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-sm"></span>
+                            <p id="profilAdminEmail" class="text-green-600 text-[11px] font-medium tracking-wide">Memuat...</p>
+                        </div>
+                    </div>
+                    <img id="profilLogo" src="https://ui-avatars.com/api/?name=Admin+Toko&background=16a34a&color=fff" alt="Admin" class="w-10 h-10 rounded-full border-2 border-green-100 shadow-sm object-cover">
+                </div>
+            </div>
+        </header>
+
+        <div class="p-8 max-w-7xl mx-auto w-full pb-20">
+            <!-- TAB 1: KELOLA BARANG -->
+            <div id="tab-kelolaBarang" class="tab-content active space-y-8">
+                <!-- Form Tambah Barang -->
+                <section class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
+                        <div class="p-2 bg-green-100 rounded-lg text-green-600"><i class="fa-solid fa-plus"></i></div>
+                        <h3 class="text-lg font-semibold text-gray-800">Tambahkan Barang Baru</h3>
+                    </div>
+                    <form id="formTambahBarang" class="p-6">
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            <!-- Upload Gambar LOKAL -->
+                            <div class="col-span-1">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Foto Barang</label>
+                                <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-xl hover:border-green-500 hover:bg-green-50/50 transition-all relative h-64 bg-gray-50 group" id="drop-zone">
+                                    <div class="space-y-2 text-center flex flex-col items-center justify-center w-full h-full" id="upload-content">
+                                        <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm mb-2 group-hover:scale-110 transition-transform">
+                                            <i class="fa-solid fa-cloud-arrow-up text-2xl text-green-500"></i>
+                                        </div>
+                                        <div class="flex text-sm text-gray-600">
+                                            <label for="file-upload" class="relative cursor-pointer rounded-md font-semibold text-green-600 hover:text-green-700 focus-within:outline-none">
+                                                <span>Pilih File</span>
+                                                <input id="file-upload" name="file-upload" type="file" class="sr-only" accept="image/*">
+                                            </label>
+                                            <p class="pl-1">dari perangkat</p>
+                                        </div>
+                                    </div>
+                                    <img id="image-preview" src="#" alt="Preview" class="hidden absolute inset-0 w-full h-full object-cover rounded-lg border-2 border-green-200">
+                                    <button type="button" id="btn-remove-image" class="hidden absolute -top-3 -right-3 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-600 shadow-md transform hover:scale-110 transition-transform">
+                                        <i class="fa-solid fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <!-- Input Data -->
+                            <div class="col-span-1 lg:col-span-2 space-y-5">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Kode Barang</label>
+                                        <div class="relative rounded-md shadow-sm">
+                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-barcode text-gray-400"></i></div>
+                                            <input type="text" id="kode_barang" class="focus:ring-green-500 focus:border-green-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-lg py-2.5 border" placeholder="TS-001" required>
+                                        </div>
+                                        <p id="peringatanKode" class="mt-1.5 text-xs text-red-500 font-bold hidden"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Kode barang sudah digunakan!</p>
+                                    </div>
+                                    <!-- DI SINI SEBELUMNYA ADA </div> BERLEBIH YANG SUDAH DIHAPUS -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Harga (Rp)</label>
+                                        <div class="relative rounded-md shadow-sm">
+                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><span class="text-gray-500 sm:text-sm font-medium">Rp</span></div>
+                                            <input type="number" id="harga" class="focus:ring-green-500 focus:border-green-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-lg py-2.5 border" placeholder="50000" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Nama Barang Lengkap</label>
+                                    <input type="text" id="nama_barang" class="focus:ring-green-500 focus:border-green-500 block w-full px-4 sm:text-sm border-gray-300 rounded-lg py-2.5 border" required>
+                                </div>
+                                <!-- AREA PILIH KATEGORI (CHIPS) -->
+                                <div class="col-span-1 sm:col-span-2 pt-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Kategori Barang</label>
+                                    <div id="kategoriChipsContainer" class="flex flex-wrap gap-2 mb-2">
+                                        <!-- Tombol kategori akan di-generate otomatis di sini -->
+                                    </div>
+                                    <button type="button" onclick="tambahKategoriBaru()" class="text-sm text-green-600 hover:text-green-700 font-medium flex items-center gap-1.5 mt-2 transition-colors">
+                                        <i class="fa-solid fa-circle-plus"></i> Tambah Kategori Baru
+                                    </button>
+                                    <input type="hidden" id="kategori_barang_terpilih" required>
+                                </div>
+                                <!-- AREA VARIASI DINAMIS -->
+                                <div class="col-span-1 sm:col-span-2 border rounded-xl p-5 bg-gray-50 shadow-sm">
+                                    <div class="flex items-center gap-2 mb-4">
+                                        <div class="w-2.5 h-2.5 rounded-full bg-red-500"></div>
+                                        <label class="block text-sm font-bold text-gray-800">Variasi</label>
+                                    </div>
+
+                                    <button type="button" id="btnAktifkanVariasi" onclick="mulaiVariasi()" class="w-full py-3.5 border-2 border-dashed border-gray-300 rounded-lg text-green-600 font-bold hover:bg-green-50 hover:border-green-400 transition-colors flex items-center justify-center gap-2 bg-white">
+                                        <i class="fa-solid fa-plus text-lg"></i> Aktifkan Variasi
+                                    </button>
+
+                                    <div id="containerVariasi" class="hidden space-y-3">
+                                        <!-- Kotak input variasi akan muncul di sini -->
+                                    </div>
+
+                                    <button type="button" id="btnTambahVariasi" onclick="tambahInputVariasi()" class="hidden mt-4 w-full py-2.5 border-2 border-dashed border-gray-300 rounded-lg text-green-600 font-bold hover:bg-green-50 hover:border-green-400 transition-colors flex items-center justify-center gap-2 bg-white">
+                                        <i class="fa-solid fa-plus"></i> <span id="teksTambahVariasi">Tambah Variasi 2</span>
+                                    </button>
+                                </div>
+                                
+                                <div class="pt-6 flex justify-end gap-3 border-t border-gray-100 mt-4">
+                                    <button type="button" id="btnReset" class="bg-white py-2.5 px-5 border rounded-lg text-sm text-gray-700 hover:bg-gray-50">Kosongkan</button>
+                                    <button type="submit" class="inline-flex justify-center items-center py-2.5 px-6 rounded-lg text-white bg-green-600 hover:bg-green-700">
+                                        <i class="fa-solid fa-check mr-2"></i> Simpan Barang
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </section>
+
+                <!-- Tabel Katalog -->
+                <section class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    
+                    <!-- 1. Header & Pencarian Asli -->
+                    <div class="px-6 py-4 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-center bg-gray-50/50 gap-4">
+                        <div class="flex items-center gap-2">
+                             <div class="p-2 bg-blue-100 rounded-lg text-blue-600"><i class="fa-solid fa-list"></i></div>
+                            <h3 class="text-lg font-semibold text-gray-800">Katalog Saat Ini</h3>
+                        </div>
+                        <div class="relative w-full sm:w-64">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-magnifying-glass text-gray-400"></i></div>
+                            <input type="text" id="searchAdminBarang" class="focus:ring-green-500 focus:border-green-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-lg py-2 border" placeholder="Cari nama / kode...">
+                        </div>
+                    </div>
+
+                    <!-- 2. Tombol Atur Urutan Lebar Penuh -->
+                    <div class="px-6 py-3 border-b border-gray-100 bg-white">
+                        <button onclick="bukaModalUrutan()" class="w-full px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg shadow-sm transition-colors flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-arrow-down-a-z"></i> Atur Urutan Barang
+                        </button>
+                    </div>
+
+                    <!-- 3. Navigasi Filter Kategori Tabel -->
+                    <div class="px-6 py-3 border-b border-gray-100 bg-gray-50">
+                        <div class="flex gap-2 overflow-x-auto hide-scrollbar pb-1" id="adminTableCategoryFilter">
+                            <!-- Tombol filter di-generate via JS -->
+                        </div>
+                    </div>
+                    
+                    <div class="table-container overflow-x-auto w-full">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-white">
+                                <tr>
+                                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Gambar</th>
+                                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Kode</th>
+                                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Nama Barang</th>
+                                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Variasi</th> 
+                                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Harga</th>
+                                    <th class="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase">Status</th>
+                                    <th class="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-body" class="bg-white divide-y divide-gray-100"></tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- AREA PAGINASI ADMIN -->
+                    <div class="px-6 py-4 border-t border-gray-100 bg-gray-50 flex items-center justify-between" id="adminPaginationContainer">
+                        <span class="text-sm text-gray-500 font-medium" id="adminPaginationInfo">Menampilkan 0 barang</span>
+                        <div class="flex items-center gap-2" id="adminPaginationButtons">
+                            <!-- Tombol Prev/Next akan di-generate via JS -->
+                        </div>
+                    </div>
+                </section>
+            </div>
+            <!-- TAB BARU: KELOLA PESANAN -->
+            <div id="tab-kelolaPesanan" class="tab-content space-y-6">
+                <section class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                        <div class="flex items-center gap-2">
+                             <div class="p-2 bg-orange-100 rounded-lg text-orange-600"><i class="fa-solid fa-clipboard-list"></i></div>
+                            <h3 class="text-lg font-semibold text-gray-800">Daftar Pesanan Masuk</h3>
+                        </div>
+                        <button onclick="loadAdminPesanan()" class="text-sm text-gray-500 hover:text-orange-600 flex items-center gap-1 transition-colors">
+                            <i class="fa-solid fa-rotate-right"></i> Segarkan
+                        </button>
+                    </div>
+                    
+                    <div class="table-container overflow-x-auto w-full max-h-[700px] overflow-y-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-white sticky top-0 shadow-sm z-10">
+                                <tr>
+                                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Waktu & Invoice</th>
+                                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Pembeli</th>
+                                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Total</th>
+                                    <th class="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase">Pembayaran</th>
+                                    <th class="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase">Pengiriman</th>
+                                    <th class="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-pesanan-body" class="bg-white divide-y divide-gray-100"></tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+            <!-- TAB 2: PENGATURAN BANNER -->
+            <div id="tab-pengaturanBanner" class="tab-content space-y-6">
+                <!-- Preview Visual Banner -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
+                    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                        <h3 class="text-sm font-semibold text-gray-600 uppercase">Preview Tampilan</h3>
+                    </div>
+                    <div class="p-6 bg-gray-100 flex justify-center items-center">
+                        <div class="w-full max-w-3xl bg-green-600 text-white rounded-lg shadow-md overflow-hidden relative">
+                            <div class="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-white opacity-10 blur-2xl"></div>
+                            <div class="px-8 py-10 flex flex-col md:flex-row items-center justify-between relative z-10">
+                                <div class="mb-4 md:mb-0 text-center md:text-left">
+                                    <h1 id="previewBannerTitle" class="text-3xl font-extrabold mb-2">Koleksi Terbaru!</h1>
+                                    <p id="previewBannerSubtitle" class="text-green-100 text-lg">Pesan mudah via WhatsApp.</p>
+                                </div>
+                                <i class="fa-solid fa-bullhorn text-6xl text-green-400 opacity-50 hidden md:block transform -rotate-12"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <section class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <form id="formEditBanner" class="p-6 space-y-6 max-w-3xl">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Judul Utama</label>
+                            <input type="text" id="bannerTitle" class="block w-full px-4 border border-gray-300 rounded-lg py-3 font-bold" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Sub-judul / Deskripsi</label>
+                            <input type="text" id="bannerSubtitle" class="block w-full px-4 border border-gray-300 rounded-lg py-3" required>
+                        </div>
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border">
+                            <div>
+                                <h4 class="text-sm font-bold text-gray-800">Tampilkan Banner di Website</h4>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="toggleBanner" class="sr-only peer">
+                                <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                            </label>
+                        </div>
+                        <div class="pt-4 flex justify-end">
+                            <button type="submit" class="py-2.5 px-6 rounded-lg text-white bg-green-600 hover:bg-green-700">
+                                <i class="fa-solid fa-save mr-2"></i> Simpan Perubahan
+                            </button>
+                        </div>
+                    </form>
+                </section>
+            </div>
+
+            <!-- TAB 3: PENGATURAN TOKO -->
+            <div id="tab-pengaturanToko" class="tab-content space-y-6">
+                <form id="formPengaturanToko" class="space-y-6">
+                    <section class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div class="px-6 py-4 border-b flex items-center gap-2 bg-blue-50/50">
+                            <div class="p-2 bg-blue-100 rounded-lg text-blue-600"><i class="fa-solid fa-address-book"></i></div>
+                            <h3 class="text-lg font-semibold text-gray-800">Informasi Toko</h3>
+                        </div>
+                        <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-1">Nama Toko</label>
+                                <input type="text" id="storeName" class="block w-full px-4 border border-gray-300 rounded-lg py-2.5" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-1">Nomor WA Admin</label>
+                                <input type="number" id="waNumber" class="block w-full px-4 border border-gray-300 rounded-lg py-2.5" placeholder="628123..." required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-1">Link Instagram</label>
+                                <input type="url" id="igLink" class="block w-full px-4 border border-gray-300 rounded-lg py-2.5">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-1">Link Facebook</label>
+                                <input type="url" id="fbLink" class="block w-full px-4 border border-gray-300 rounded-lg py-2.5">
+                            </div>
+                            <!-- KOTAK PENGATURAN KATEGORI MODERN -->
+                            <div class="col-span-1 md:col-span-2 p-5 bg-gray-50 rounded-lg border mt-2 shadow-inner">
+                                <label class="block text-sm font-bold text-gray-700 mb-4"><i class="fa-solid fa-tags text-green-500 mr-2"></i>Kelola Master Kategori</label>
+                                
+                                <div id="masterKategoriVisual" class="flex flex-wrap gap-2.5 mb-5 min-h-[40px] p-2 border-2 border-dashed border-gray-200 rounded-lg bg-white">
+                                </div>
+
+                                <div class="flex gap-2">
+                                    <input type="text" id="inputTambahMaster" class="flex-1 px-4 border border-gray-300 rounded-lg py-2.5 focus:ring-green-500 focus:border-green-500 text-sm" placeholder="Ketik kategori baru (contoh: Pakaian)..." onkeypress="if(event.key === 'Enter') { event.preventDefault(); tambahMasterKategori(); }">
+                                    <button type="button" onclick="tambahMasterKategori()" class="bg-gray-800 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-gray-700 transition-colors flex items-center gap-2 text-sm shadow-sm">
+                                        <i class="fa-solid fa-plus"></i> Tambah
+                                    </button>
+                                </div>
+                                
+                                <input type="hidden" id="kategoriToko" value="">
+                                <p class="text-[11px] text-gray-500 mt-3 font-medium"><i class="fa-solid fa-circle-info mr-1"></i> Data di atas akan menjadi acuan filter pembeli dan pilihan admin. Jangan lupa tekan "Simpan Pengaturan" di bawah setelah selesai.</p>
+                            </div>
+                            <div class="col-span-1 md:col-span-2 p-4 bg-gray-50 rounded-lg border">
+                                <label class="block text-sm font-bold text-gray-700 mb-2">Logo Toko</label>
+                                <div class="flex items-center gap-4">
+                                    <img id="previewLogoPengaturan" src="https://ui-avatars.com/api/?name=Toko&background=16a34a&color=fff" class="h-16 w-16 rounded-lg object-cover border bg-white">
+                                    <input type="file" id="logoUpload" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                                </div>
+                                <p class="text-xs text-gray-500 mt-2">Pilih gambar persegi untuk hasil terbaik. Kosongkan jika tidak ingin mengubah logo saat ini.</p>
+                            </div>
+                        </div>
+                    </section>
+                    
+                    <section class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div class="p-6 flex items-center justify-between">
+                            <div>
+                                <h4 class="text-sm font-bold text-gray-800">Status Operasional (Toko Buka)</h4>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="toggleStatusBuka" class="sr-only peer">
+                                <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                            </label>
+                        </div>
+                        <div class="px-6 py-4 bg-gray-50 border-t flex justify-end">
+                            <button type="submit" class="py-2.5 px-6 rounded-lg text-white bg-green-600 hover:bg-green-700">
+                                <i class="fa-solid fa-save mr-2"></i> Simpan Pengaturan
+                            </button>
+                        </div>
+                    </section>
+                </form>
+            </div>
+            <!-- TAB 4: LOG AKTIVITAS -->
+            <div id="tab-logAktivitas" class="tab-content space-y-6">
+                <section class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                        <div class="flex items-center gap-2">
+                             <div class="p-2 bg-purple-100 rounded-lg text-purple-600"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                            <h3 class="text-lg font-semibold text-gray-800">Riwayat Aktivitas (CCTV)</h3>
+                        </div>
+                        <button onclick="loadLogAktivitas()" class="text-sm text-gray-500 hover:text-purple-600 flex items-center gap-1 transition-colors">
+                            <i class="fa-solid fa-rotate-right"></i> Segarkan
+                        </button>
+                    </div>
+                    <div class="table-container overflow-x-auto w-full max-h-[600px] overflow-y-auto">
+                        <table class="min-w-full divide-y divide-gray-200 relative">
+                            <thead class="bg-white sticky top-0 shadow-sm z-10">
+                                <tr>
+                                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Waktu</th>
+                                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Petugas</th>
+                                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Aksi</th>
+                                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Detail Perubahan</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-log-body" class="bg-white divide-y divide-gray-100"></tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+    <!-- Modal Atur Urutan Drag & Drop (Arsitektur Scroll Layar Penuh) -->
+    <div id="modalUrutan" class="fixed inset-0 bg-gray-900 bg-opacity-70 z-50 hidden overflow-y-auto p-4 sm:p-6 custom-scrollbar">
+        
+        <!-- Kotak Modal -->
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-7xl mx-auto flex flex-col relative my-auto min-h-[50vh]">
+            
+            <!-- Header (Dibuat Sticky agar tetap di atas saat layar digulir) -->
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-white z-20 sticky top-0 rounded-t-xl shadow-sm">
+                <h3 class="font-bold text-gray-800 flex items-center gap-2">
+                    <i class="fa-brands fa-google-drive text-blue-500 text-lg"></i>Atur Urutan Etalase
+                </h3>
+                <button onclick="tutupModalUrutan()" class="text-gray-400 hover:text-red-500 transition-colors w-8 h-8 flex items-center justify-center rounded-full hover:bg-red-50"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            
+            <!-- Area Grid (Tanpa scroll internal, biarkan memanjang lepas) -->
+            <div class="p-6 bg-[#f0f4f9] flex-1">
+                <p class="text-xs text-gray-500 mb-6 text-center font-medium bg-blue-50 text-blue-700 py-2.5 rounded-lg border border-blue-100 shadow-sm max-w-lg mx-auto">
+                    <i class="fa-solid fa-hand-pointer mr-1"></i>Tahan dan geser kartu barang ke posisi yang Anda inginkan.
+                </p>
+                
+                <div id="listUrutanBarang" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 pb-6">
+                    <!-- Kartu akan di-generate via JS -->
+                </div>
+            </div>
+            
+            <!-- Footer (Dibuat Sticky agar selalu tampak di layar bawah) -->
+            <div class="px-6 py-4 border-t border-gray-200 flex justify-end gap-3 bg-white z-20 sticky bottom-0 rounded-b-xl shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+                <button onclick="tutupModalUrutan()" class="px-5 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">Batal</button>
+                <button onclick="simpanUrutanBarang()" id="btnSimpanUrutan" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg flex items-center gap-2 transition-all shadow-md hover:shadow-lg">
+                    <i class="fa-solid fa-save"></i> Simpan Urutan
+                </button>
+            </div>
+            
+        </div>
+    </div>
+    <!-- Notifikasi Toast -->
+    <div id="toast" class="fixed bottom-5 right-5 flex items-center w-full max-w-xs p-4 space-x-3 text-gray-500 bg-white rounded-lg shadow-xl border-l-4 border-green-500 transform transition-transform translate-y-24 opacity-0 z-50">
+        <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-green-500 bg-green-100 rounded-lg"><i class="fa-solid fa-check"></i></div>
+        <div class="ml-3 text-sm font-normal text-gray-800" id="toastMessage">Berhasil!</div>
+    </div>
+
+    <!-- Panggil File JavaScript Modular Kita -->
+    <!-- URUTAN SANGAT PENTING: supabase.js harus dipanggil sebelum admin.js -->
+    <script src="js/supabase.js"></script>
+    <script src="js/admin.js"></script>
+</body>
+</html>
